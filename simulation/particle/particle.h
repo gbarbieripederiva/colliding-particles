@@ -35,7 +35,11 @@ public:
     void setDX(double dx);
     void setDY(double dy);
 
+    // operators
+    bool operator ==(const Particle &p2) const;
+
     double distanceTo(Particle &p);
+
 };
 
 std::ostream &operator<<(std::ostream &os, Particle const &particle);

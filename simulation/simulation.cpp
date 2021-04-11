@@ -49,11 +49,11 @@ int main(int argc, char const *argv[])
     for (int i = 0; i < EVENT_TO_PROCESS; i++)
     {
         ParticleCollideEvent nextEvent = calculateNextCollision(SIM_SIDE_X,SIM_SIDE_Y, particles);
-        advanceParticleToNextEvent(particles,nextEvent);
+        advanceParticlesToNextEvent(particles,nextEvent);
         outputfile << std::endl;
         printState(particles,outputfile);
     }
     outputfile.close();
-
+    
     return 0;
 }

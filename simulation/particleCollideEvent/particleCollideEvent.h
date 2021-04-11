@@ -2,10 +2,11 @@
 #define __PARTICLE_COLLIDE_EVENT_H__
 
 #include <iostream>
+#include <vector>
 #include "../particle/particle.h"
 
 enum Wall{
-    WALL_X_POSTIVO,
+    WALL_X_POSITIVO,
     WALL_Y_POSITIVO,
     WALL_X_NEGATIVO,
     WALL_Y_NEGATIVO
@@ -41,6 +42,8 @@ public:
     void setIsWall(bool isWall);
     void setTime(double t);
     void setNoEvent(bool noEvent);
+
+    std::vector<double> newVelsAfterEvent() const;
 };
 
 std::ostream &operator<<(std::ostream &os, ParticleCollideEvent const &pce);

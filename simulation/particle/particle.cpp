@@ -21,6 +21,12 @@ void Particle::setY(double y) { this->y = y; }
 void Particle::setDX(double dx) { this->dx = dx; }
 void Particle::setDY(double dy) { this->dy = dy; }
 
+// operators
+bool Particle::operator ==(const Particle &p2) const{
+    return p2.id == this->id;
+}
+
+
 double Particle::distanceTo(Particle &p){
     return sqrt(pow(this->getX()-p.getX(),2) + pow(this->getY()-p.getY(),2));
 }
