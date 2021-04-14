@@ -101,29 +101,45 @@ ParticleCollideEvent advanceEvents(
         std::vector<ParticleCollideEvent>,
         ParticleCollideEvent::TimeComparator> &events,
         double lastEventTime){
-    if(events.empty()){
-        return ParticleCollideEvent();
-    }
-    ParticleCollideEvent p = ParticleCollideEvent(events.top());
-    if(!p.getNoEvent()){
+    
+    ParticleCollideEvent res;
+    bool finished = false;
+    while (!finished)
+    {
+        if(events.empty()){
+            res = ParticleCollideEvent();
+            finished = true;
+            continue;
+        }
+        res = ParticleCollideEvent(events.top());
+        events.pop();
         for (int i = 0; i < particles.size(); i++)
         {
-            particles[i]->advanceWithNoCollision(p.getTime() - lastEventTime);
+            particles[i]->advanceWithNoCollision(res.getTime() - lastEventTime);
         }
-        if(p.getIsWall()){
-            if(p.getWall()==ParticleCollideEventConstants::WALL_X){
-                p.getP1()->bounceX();
-            }else{
-                p.getP1()->bounceY();
+        if(!res.getNoEvent()){
+            if(res.getCollisionCountP1()==res.getP1()->getCollisionCount()){
+                if(res.getIsWall()){
+                    if(res.getWall()==ParticleCollideEventConstants::WALL_X){
+                        res.getP1()->bounceX();
+                    }else{
+                        res.getP1()->bounceY();
+                    }
+                    finished = true;
+                } else{
+                    if(res.getCollisionCountP2() == res.getP2()->getCollisionCount()){
+                        res.getP1()->bounce(*res.getP2());
+                        finished = true;
+                    }
+                }
             }
-            
-        } else{
-            p.getP1()->bounce(*p.getP2());
+        }else{
+            finished = true;
         }
     }
 
     // else if p is no event return that
-    return p;
+    return res;
 }
 
 void printState(std::vector<Particle *> &particles, std::ostream &os = std::cout, double time = 0)
