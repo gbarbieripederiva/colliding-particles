@@ -125,10 +125,73 @@ ParticleCollideEvent advanceEvents(
                     }else{
                         res.getP1()->bounceY();
                     }
+                    // add all new events for particle p1
+                    for (int i = 0; i < particles.size(); i++)
+                    {
+                        if (particles[i]->getID() == res.getP1()->getID())
+                        {
+                            double tx = res.getP1()->collideX(0, simData.simSideX);
+                            if (tx >= 0)
+                            {
+                                events.push(ParticleCollideEvent(tx, res.getP1(),ParticleCollideEventConstants::WALL_X));
+                            }
+                            double ty = res.getP1()->collideX(0, simData.simSideY);
+                            if (ty >= 0)
+                            {
+                                events.push(ParticleCollideEvent(ty, res.getP1(),ParticleCollideEventConstants::WALL_Y));
+                            }
+                        }
+                        else
+                        {
+                            double t = res.getP1()->collide(*(particles[i]));
+                            if(t >= 0){
+                                events.push(ParticleCollideEvent(t,res.getP1(),particles[i]));
+                            }
+                        }
+                    }
                     finished = true;
                 } else{
                     if(res.getCollisionCountP2() == res.getP2()->getCollisionCount()){
                         res.getP1()->bounce(*res.getP2());
+                        // Add all new events for particles 1 and 2
+                        for (int i = 0; i < particles.size(); i++)
+                        {
+                            if (particles[i]->getID() == res.getP1()->getID())
+                            {
+                                double tx = res.getP1()->collideX(0, simData.simSideX);
+                                if (tx >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(tx, res.getP1(),ParticleCollideEventConstants::WALL_X));
+                                }
+                                double ty = res.getP1()->collideX(0, simData.simSideY);
+                                if (ty >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(ty, res.getP1(),ParticleCollideEventConstants::WALL_Y));
+                                }
+                            }else if (particles[i]->getID() == res.getP2()->getID()){
+                                double tx = res.getP2()->collideX(0, simData.simSideX);
+                                if (tx >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(tx, res.getP2(),ParticleCollideEventConstants::WALL_X));
+                                }
+                                double ty = res.getP2()->collideX(0, simData.simSideY);
+                                if (ty >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(ty, res.getP2(),ParticleCollideEventConstants::WALL_Y));
+                                }
+                            }
+                            else
+                            {
+                                double t = res.getP1()->collide(*(particles[i]));
+                                if(t >= 0){
+                                    events.push(ParticleCollideEvent(t,res.getP1(),particles[i]));
+                                }
+                                double t2 = res.getP2()->collide(*(particles[i]));
+                                if(t2 >= 0){
+                                    events.push(ParticleCollideEvent(t,res.getP2(),particles[i]));
+                                }
+                            }
+                        }
                         finished = true;
                     }
                 }
