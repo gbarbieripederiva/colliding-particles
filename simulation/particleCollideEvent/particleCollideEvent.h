@@ -51,7 +51,7 @@ public:
     struct TimeComparator
     {
         bool operator()(const ParticleCollideEvent &p1,const ParticleCollideEvent &p2){
-            return p1.t < p2.t;
+            return p1.t > p2.t;
         }
     };
 
