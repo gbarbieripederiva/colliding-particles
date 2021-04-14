@@ -6,12 +6,12 @@ std::ostream &operator<<(std::ostream &os, ParticleCollideEvent const &pce)
         return os   << "{ noEvent:true }";
     }
     else if(pce.getIsWall()){
-        return os   << "{ p:" << pce.getP1()
+        return os   << "{ p:" << *pce.getP1()
                     << ", time:" << pce.getTime()
                     << " }";
     }else{
-        return os   << "{ p1:" << pce.getP1()
-                    << ", p2:" << pce.getP2()
+        return os   << "{ p1:" << *pce.getP1()
+                    << ", p2:" << *pce.getP2()
                     << ", time:" << pce.getTime()
                     << " }";
     }

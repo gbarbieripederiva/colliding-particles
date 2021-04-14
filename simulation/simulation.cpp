@@ -10,12 +10,15 @@
 
 #define PARTICLE_FILENAME "particles.txt"
 #define OUTPUT_FILENAME "output.txt"
+#define LOG_FILENAME "log.txt"
 #define DATA_PATH "./data"
+
+#define LOG2_FILENAME "log2.txt"
 
 int main(int argc, char const *argv[])
 {
     namespace fs = std::filesystem;
-    SimData simData = SimData(10,10,2);
+    SimData simData = SimData(10,10,10);
 
     std::string dataPath = DATA_PATH;
     if (argc > 1)
@@ -45,17 +48,45 @@ int main(int argc, char const *argv[])
 
     std::ofstream outputfile;
     outputfile.open(dataPath / fs::path(OUTPUT_FILENAME), std::ios::trunc);
+
+    std::ofstream logfile;
+    logfile.open(dataPath / fs::path(LOG_FILENAME), std::ios::trunc);
+
+    #ifdef LOG2_FILENAME
+    std::ofstream logfile2;
+    logfile2.open(dataPath / fs::path("log2.txt"), std::ios::trunc);
+    #endif
+
     printState(particles, outputfile,0);
+    
     std::priority_queue<ParticleCollideEvent,std::vector<ParticleCollideEvent>,ParticleCollideEvent::TimeComparator> events;
     initEventVector(simData,particles,events);
+    
     ParticleCollideEvent lastEvent = ParticleCollideEvent();
     lastEvent.setTime(0);
     for (int i = 0; i < simData.eventsToProcess; i++)
     {
         lastEvent = advanceEvents(simData,particles,events,lastEvent.getTime());
         outputfile << std::endl;
+        logfile << "Event " << i << ": " << lastEvent << std::endl;
+        
+        #ifdef LOG2_FILENAME
+        std::priority_queue<ParticleCollideEvent,std::vector<ParticleCollideEvent>,ParticleCollideEvent::TimeComparator> copy = std::priority_queue<ParticleCollideEvent,std::vector<ParticleCollideEvent>,ParticleCollideEvent::TimeComparator>(events);
+        while(!copy.empty()){
+            logfile2 << copy.top() << std::endl;
+            copy.pop();
+        }
+        logfile2 << std::endl;
+        #endif
+        
         printState(particles, outputfile,lastEvent.getTime());
     }
+    
+    #ifdef LOG2_FILENAME
+    logfile2.close();
+    #endif
+
+    logfile.close();
     outputfile.close();
     
     // final cleaning

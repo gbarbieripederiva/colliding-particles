@@ -76,7 +76,7 @@ void initEventVector(
                 {
                     events.push(ParticleCollideEvent(tx, particles[i],ParticleCollideEventConstants::WALL_X));
                 }
-                double ty = particles[i]->collideX(0, simData.simSideY);
+                double ty = particles[i]->collideY(0, simData.simSideY);
                 if (ty >= 0)
                 {
                     events.push(ParticleCollideEvent(ty, particles[i],ParticleCollideEventConstants::WALL_Y));
@@ -100,8 +100,8 @@ ParticleCollideEvent advanceEvents(
         ParticleCollideEvent,
         std::vector<ParticleCollideEvent>,
         ParticleCollideEvent::TimeComparator> &events,
-        double lastEventTime){
-    
+        const double lastEventTime = 0){
+    std::cout << lastEventTime << std::endl;
     ParticleCollideEvent res;
     bool finished = false;
     while (!finished)
@@ -133,19 +133,19 @@ ParticleCollideEvent advanceEvents(
                             double tx = res.getP1()->collideX(0, simData.simSideX);
                             if (tx >= 0)
                             {
-                                events.push(ParticleCollideEvent(tx, res.getP1(),ParticleCollideEventConstants::WALL_X));
+                                events.push(ParticleCollideEvent(tx+lastEventTime, res.getP1(),ParticleCollideEventConstants::WALL_X));
                             }
-                            double ty = res.getP1()->collideX(0, simData.simSideY);
+                            double ty = res.getP1()->collideY(0, simData.simSideY);
                             if (ty >= 0)
                             {
-                                events.push(ParticleCollideEvent(ty, res.getP1(),ParticleCollideEventConstants::WALL_Y));
+                                events.push(ParticleCollideEvent(ty+lastEventTime, res.getP1(),ParticleCollideEventConstants::WALL_Y));
                             }
                         }
                         else
                         {
                             double t = res.getP1()->collide(*(particles[i]));
                             if(t >= 0){
-                                events.push(ParticleCollideEvent(t,res.getP1(),particles[i]));
+                                events.push(ParticleCollideEvent(t+lastEventTime,res.getP1(),particles[i]));
                             }
                         }
                     }
@@ -161,34 +161,34 @@ ParticleCollideEvent advanceEvents(
                                 double tx = res.getP1()->collideX(0, simData.simSideX);
                                 if (tx >= 0)
                                 {
-                                    events.push(ParticleCollideEvent(tx, res.getP1(),ParticleCollideEventConstants::WALL_X));
+                                    events.push(ParticleCollideEvent(tx+lastEventTime, res.getP1(),ParticleCollideEventConstants::WALL_X));
                                 }
-                                double ty = res.getP1()->collideX(0, simData.simSideY);
+                                double ty = res.getP1()->collideY(0, simData.simSideY);
                                 if (ty >= 0)
                                 {
-                                    events.push(ParticleCollideEvent(ty, res.getP1(),ParticleCollideEventConstants::WALL_Y));
+                                    events.push(ParticleCollideEvent(ty+lastEventTime, res.getP1(),ParticleCollideEventConstants::WALL_Y));
                                 }
                             }else if (particles[i]->getID() == res.getP2()->getID()){
                                 double tx = res.getP2()->collideX(0, simData.simSideX);
                                 if (tx >= 0)
                                 {
-                                    events.push(ParticleCollideEvent(tx, res.getP2(),ParticleCollideEventConstants::WALL_X));
+                                    events.push(ParticleCollideEvent(tx+lastEventTime, res.getP2(),ParticleCollideEventConstants::WALL_X));
                                 }
-                                double ty = res.getP2()->collideX(0, simData.simSideY);
+                                double ty = res.getP2()->collideY(0, simData.simSideY);
                                 if (ty >= 0)
                                 {
-                                    events.push(ParticleCollideEvent(ty, res.getP2(),ParticleCollideEventConstants::WALL_Y));
+                                    events.push(ParticleCollideEvent(ty+lastEventTime, res.getP2(),ParticleCollideEventConstants::WALL_Y));
                                 }
                             }
                             else
                             {
                                 double t = res.getP1()->collide(*(particles[i]));
                                 if(t >= 0){
-                                    events.push(ParticleCollideEvent(t,res.getP1(),particles[i]));
+                                    events.push(ParticleCollideEvent(t+lastEventTime,res.getP1(),particles[i]));
                                 }
                                 double t2 = res.getP2()->collide(*(particles[i]));
                                 if(t2 >= 0){
-                                    events.push(ParticleCollideEvent(t,res.getP2(),particles[i]));
+                                    events.push(ParticleCollideEvent(t2+lastEventTime,res.getP2(),particles[i]));
                                 }
                             }
                         }

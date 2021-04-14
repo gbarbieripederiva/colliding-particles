@@ -17,7 +17,7 @@ double Particle::collideX(double xWallLeft, double xWallRight) const
 }
 double Particle::collideY(double yWallDown, double yWallUp) const
 {
-    return this->dx > 0 ? (yWallUp - this->r - this->y) / this->dy : (yWallDown + this->r - this->y) / this->dy;
+    return this->dy > 0 ? (yWallUp - this->r - this->y) / this->dy : (yWallDown + this->r - this->y) / this->dy;
 }
 
 /* Dot product of two arrays of two doubles */
