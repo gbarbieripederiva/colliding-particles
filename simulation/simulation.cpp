@@ -39,7 +39,7 @@ int main(int argc, char const *argv[])
         std::ofstream particleFile;
         particleFile.open(particlePath);
         particles = generateParticles(10, SIM_SIDE_X, SIM_SIDE_Y, 0.1, 0.1, 0.1, 0.1);
-        saveParticles(particleFile, particles);
+        printState(particles,particleFile);
         particleFile.close();
     }
 
@@ -48,8 +48,6 @@ int main(int argc, char const *argv[])
     printState(particles,outputfile);
     for (int i = 0; i < EVENT_TO_PROCESS; i++)
     {
-        ParticleCollideEvent nextEvent = calculateNextCollision(SIM_SIDE_X,SIM_SIDE_Y, particles);
-        advanceParticlesToNextEvent(particles,nextEvent);
         outputfile << std::endl;
         printState(particles,outputfile);
     }
