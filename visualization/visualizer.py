@@ -4,11 +4,9 @@ import matplotlib.collections
 import sys
 import argparse
 
-argp = argparse.ArgumentParser(description="Particle neighbour visualizer")
+argp = argparse.ArgumentParser(description="Particle collision visualizer")
 argp.add_argument('--particle-file-path', dest='particle_path', help='particle file path')
 argp.add_argument('--output-file-path', dest='output_path', help='output file path')
-argp.add_argument('pid',nargs='?', help='particle id to highlight')
-
 args = argp.parse_args()
 
 sim_data = data_parser.data_getter(
