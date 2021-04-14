@@ -126,9 +126,9 @@ ParticleCollideEvent advanceEvents(
     return p;
 }
 
-void printState(std::vector<Particle *> &particles, std::ostream &os = std::cout)
+void printState(std::vector<Particle *> &particles, std::ostream &os = std::cout, double time = 0)
 {
-    os << particles.size() << std::endl;
+    os << particles.size() << " " << time << std::endl;
     for (Particle* p : particles)
     {
         os  << p->getX() << " " 
@@ -143,9 +143,9 @@ void printState(std::vector<Particle *> &particles, std::ostream &os = std::cout
     }
 }
 
-void printState(std::vector<Particle> &particles, std::ostream &os = std::cout)
+void printState(std::vector<Particle> &particles, std::ostream &os = std::cout, double time = 0)
 {
-    os << particles.size() << std::endl;
+    os << particles.size() << " " << time << std::endl;
     for (Particle p : particles)
     {
         os  << p.getX() << " " 
@@ -163,7 +163,8 @@ void printState(std::vector<Particle> &particles, std::ostream &os = std::cout)
 std::vector<Particle *> getParticles(std::istream &f)
 {
     int particles = 0;
-    f >> particles;
+    double time = 0;
+    f >> particles >> time;
     std::vector<Particle *> vec;
     int id = 0;
     double x, y, dx, dy, mass, radius;

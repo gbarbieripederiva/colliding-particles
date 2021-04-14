@@ -39,13 +39,13 @@ int main(int argc, char const *argv[])
         particleFile.open(particlePath);
         particles = generateParticles(10, simData, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1);
         particleFile << simData.simSideX << " " << simData.simSideY << std::endl;
-        printState(particles, particleFile);
+        printState(particles, particleFile, 0);
         particleFile.close();
     }
 
     std::ofstream outputfile;
     outputfile.open(dataPath / fs::path(OUTPUT_FILENAME), std::ios::trunc);
-    printState(particles, outputfile);
+    printState(particles, outputfile,0);
     std::priority_queue<ParticleCollideEvent,std::vector<ParticleCollideEvent>,ParticleCollideEvent::TimeComparator> events;
     initEventVector(simData,particles,events);
     ParticleCollideEvent lastEvent = ParticleCollideEvent();
@@ -54,7 +54,7 @@ int main(int argc, char const *argv[])
     {
         lastEvent = advanceEvents(simData,particles,events,lastEvent.getTime());
         outputfile << std::endl;
-        printState(particles, outputfile);
+        printState(particles, outputfile,lastEvent.getTime());
     }
     outputfile.close();
     
