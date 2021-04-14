@@ -164,8 +164,6 @@ std::vector<Particle *> getParticles(std::istream &f)
 {
     int particles = 0;
     f >> particles;
-    // TODO: maybe erase this print later
-    std::cout << "Particles:" << particles << std::endl;
     std::vector<Particle *> vec;
     int id = 0;
     double x, y, dx, dy, mass, radius;

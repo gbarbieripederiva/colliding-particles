@@ -29,6 +29,7 @@ int main(int argc, char const *argv[])
     {
         std::fstream particleFile;
         particleFile.open(particlePath, std::ios::in);
+        particleFile >> simData.simSideX >> simData.simSideY;
         particles = getParticles(particleFile);
     }
     else
@@ -37,6 +38,7 @@ int main(int argc, char const *argv[])
         std::ofstream particleFile;
         particleFile.open(particlePath);
         particles = generateParticles(10, simData, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1);
+        particleFile << simData.simSideX << " " << simData.simSideY << std::endl;
         printState(particles, particleFile);
         particleFile.close();
     }
