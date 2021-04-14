@@ -101,7 +101,6 @@ ParticleCollideEvent advanceEvents(
         std::vector<ParticleCollideEvent>,
         ParticleCollideEvent::TimeComparator> &events,
         const double lastEventTime = 0){
-    std::cout << lastEventTime << std::endl;
     ParticleCollideEvent res;
     bool finished = false;
     while (!finished)
