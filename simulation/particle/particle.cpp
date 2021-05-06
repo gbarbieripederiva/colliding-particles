@@ -80,6 +80,7 @@ void Particle::bounce(Particle &p)
     p.dx = p.dx - jx / p.m;
     p.dy = p.dy - jy / p.m;
 
+    p.cc++;
     this->cc++;
 }
 
