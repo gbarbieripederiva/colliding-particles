@@ -13,10 +13,16 @@ double Particle::distanceTo(const Particle &p) const
 
 double Particle::collideX(double xWallLeft, double xWallRight) const
 {
+    if( this->dx == 0 ){
+        return -1;
+    }
     return this->dx > 0 ? (xWallRight - this->r - this->x) / this->dx : (xWallLeft + this->r - this->x) / this->dx;
 }
 double Particle::collideY(double yWallDown, double yWallUp) const
 {
+    if( this->dy == 0 ){
+        return -1;
+    }
     return this->dy > 0 ? (yWallUp - this->r - this->y) / this->dy : (yWallDown + this->r - this->y) / this->dy;
 }
 
@@ -33,21 +39,21 @@ double dotProductCollide(double *v1, double *v2, int dim = 2)
 
 double Particle::collide(const Particle &p) const
 {
-    double alfaR[2] = {p.x - this->x, p.y - this->y};
-    double alfaV[2] = {p.dx - this->dx, p.dy - this->dy};
-    double alfaVdotAlfaR = dotProductCollide(alfaV, alfaR);
-    if (alfaVdotAlfaR >= 0)
+    double deltaR[2] = {p.x - this->x, p.y - this->y};
+    double deltaV[2] = {p.dx - this->dx, p.dy - this->dy};
+    double deltaVdotdeltaR = dotProductCollide(deltaV, deltaR);
+    if (deltaVdotdeltaR >= 0)
         return -1;
 
-    double alfaVdotAlfaV = dotProductCollide(alfaV, alfaV);
-    double alfaRdotAlfaR = dotProductCollide(alfaR, alfaR);
+    double deltaVdotdeltaV = dotProductCollide(deltaV, deltaV);
+    double deltaRdotdeltaR = dotProductCollide(deltaR, deltaR);
     double sigma = p.r + this->r;
-    double d = pow(alfaVdotAlfaR, 2) - (alfaVdotAlfaV * (alfaRdotAlfaR - pow(sigma, 2)));
+    double d = pow(deltaVdotdeltaR, 2) - (deltaVdotdeltaV * (deltaRdotdeltaR - pow(sigma, 2)));
 
     if (d < 0)
         return -1;
 
-    return -(alfaVdotAlfaR + sqrt(d)) / (alfaVdotAlfaV);
+    return -(deltaVdotdeltaR + sqrt(d)) / (deltaVdotdeltaV);
 }
 
 void Particle::bounceX()
@@ -62,10 +68,10 @@ void Particle::bounceY()
 }
 void Particle::bounce(Particle &p)
 {
-    double alfaVdotAlfaR = (this->dx - p.dx) * (this->dy - p.dy) + (this->x - p.x) * (this->y - p.y);
+    double deltaVdotdeltaR = (this->dx - p.dx) * (this->dy - p.dy) + (this->x - p.x) * (this->y - p.y);
     double sigma = this->r + p.r;
     // ((2*mi*mj*avar)/(sigma*(mi+mj)))
-    double j = (2 * this->m * p.m * alfaVdotAlfaR) / (sigma * (this->m + p.m));
+    double j = (2 * this->m * p.m * deltaVdotdeltaR) / (sigma * (this->m + p.m));
     double jx = (j * (this->x - p.x)) / sigma;
     double jy = (j * (this->y - p.y)) / sigma;
 
