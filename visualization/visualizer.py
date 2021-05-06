@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import data_parser as data_parser
+from matplotlib.animation import FuncAnimation
 import matplotlib.collections
 import sys
 import argparse
@@ -14,15 +15,31 @@ sim_data = data_parser.data_getter(
     output_file_path=args.output_path
     )
 
-def show_particles():
-    patches = [plt.Circle((p.x,p.y), p.r) for p  in  sim_data.events[0].particles]
-    ax = plt.gca()
-    ax.clear()
-    ax.figure.set_size_inches(14,10)
-    coll = matplotlib.collections.PatchCollection(patches, facecolors="black")
-    ax.add_collection(coll)
-    ax.margins(0.01)
-    ax.figure.canvas.draw()
-        
-show_particles()
+def get_circles(i):
+    global sim_data
+    circles = []
+    for p in sim_data.events[i].particles:
+        circles.append(plt.Circle((p.x,p.y),p.r))
+    return circles
+
+def show_particles(i):
+    global ax
+    global coll
+    patches = get_circles(i)
+    coll.set_paths(patches)
+    ax.set_title(f"Frame {i}", fontdict={'fontsize': 20})
+    return coll
+
+ax = plt.gca()
+ax.figure.set_size_inches(14,10)
+ax.margins(0.01)
+patches = get_circles(0)
+coll = matplotlib.collections.PatchCollection(patches)
+ax.add_collection(coll)
+
+plt.xlim([0, sim_data.simulation_side_x])
+plt.ylim([0, sim_data.simulation_side_y])
+
+ani = FuncAnimation(plt.gcf(),show_particles,frames=len(sim_data.events),blit=False)
+
 plt.show()

@@ -12,8 +12,8 @@ class Particle:
             )
 
 class ParticleCollideEvent:
-    def __init__(self, particles = [], time = 0):
-        self.particles = particles
+    def __init__(self, particles = None, time = 0):
+        self.particles = [] if particles == None else particles
         self.time = time
 
 class SimulationData:
