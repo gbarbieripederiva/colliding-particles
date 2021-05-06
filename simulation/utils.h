@@ -93,6 +93,16 @@ void initEventVector(
     }
 }
 
+void advanceWithNoCollision(
+    std::vector<Particle *> &particles,const double deltt){
+    for (int i = 0; i < particles.size(); i++)
+    {
+        // time = currEvent.getTime() - lastEventTime
+        particles[i]->advanceWithNoCollision(deltt);
+    }
+}
+
+
 ParticleCollideEvent advanceEvents(
     const SimData &simData,
     std::vector<Particle *> &particles,
@@ -112,13 +122,10 @@ ParticleCollideEvent advanceEvents(
         }
         res = ParticleCollideEvent(events.top());
         events.pop();
-        for (int i = 0; i < particles.size(); i++)
-        {
-            particles[i]->advanceWithNoCollision(res.getTime() - lastEventTime);
-        }
         if(!res.getNoEvent()){
             if(res.getCollisionCountP1()==res.getP1()->getCollisionCount()){
                 if(res.getIsWall()){
+                    advanceWithNoCollision(particles,res.getTime() - lastEventTime);
                     if(res.getWall()==ParticleCollideEventConstants::WALL_X){
                         res.getP1()->bounceX();
                     }else{
@@ -151,6 +158,7 @@ ParticleCollideEvent advanceEvents(
                     finished = true;
                 } else{
                     if(res.getCollisionCountP2() == res.getP2()->getCollisionCount()){
+                        advanceWithNoCollision(particles,res.getTime() - lastEventTime);
                         res.getP1()->bounce(*res.getP2());
                         // Add all new events for particles 1 and 2
                         for (int i = 0; i < particles.size(); i++)
