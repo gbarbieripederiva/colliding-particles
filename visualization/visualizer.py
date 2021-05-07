@@ -14,7 +14,7 @@ sim_data = data_parser.data_getter(
     particle_file_path=args.particle_path,
     output_file_path=args.output_path
     )
-sim_data.delta_time = 0.5
+sim_data.delta_time = 0.1
 
 def get_circles():
     global sim_data

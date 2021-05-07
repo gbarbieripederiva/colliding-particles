@@ -14,6 +14,10 @@ double randomDouble(double min = 0, double max = 1)
     return ((double)rand() / RAND_MAX) * (max - min) + min;
 }
 
+int randomPositiveNegative(){
+    return rand()>(RAND_MAX/2) ? -1 : 1; 
+}
+
 std::vector<Particle *> generateParticles(int qty,const SimData &simData, double minMass = 0, double maxMass = 0, double minRadius = 0, double maxRadius = 0, double minVel = 0, double maxVel = 0, long seed = -1)
 {
     auto vp = std::vector<Particle *>();
@@ -38,7 +42,8 @@ std::vector<Particle *> generateParticles(int qty,const SimData &simData, double
                                   randomDouble(minMass, maxMass),
                                   randomDouble(minRadius, maxRadius),
                                   randomDouble(0, simData.simSideX), randomDouble(0, simData.simSideY),
-                                  randomDouble(minVel, maxVel), randomDouble(minVel, maxVel));
+                                  randomPositiveNegative() * randomDouble(minVel, maxVel), 
+                                  randomPositiveNegative() * randomDouble(minVel, maxVel));
             bool superimposed = false;
             for (int j = 0; j < vp.size() && !superimposed; j++)
             {

@@ -15,10 +15,23 @@
 
 #define LOG2_FILENAME "log2.txt"
 
+#define DEFAULT_SIM_SIDE_X 10
+#define DEFAULT_SIM_SIDE_Y 10
+#define DEFAULT_EVENT_TO_PROCESS 100
+#define DEFAULT_QTY 30
+#define DEFAULT_MIN_MASS 0.1
+#define DEFAULT_MAX_MASS 0.1
+#define DEFAULT_MIN_RADIUS 0.1
+#define DEFAULT_MAX_RADIUS  0.1
+#define DEFAULT_MIN_VEL 0.5
+#define DEFAULT_MAX_VEL 0.5
+#define DEFAULT_SEED -1l
+
+
 int main(int argc, char const *argv[])
 {
     namespace fs = std::filesystem;
-    SimData simData = SimData(10,10,10);
+    SimData simData = SimData(DEFAULT_SIM_SIDE_X,DEFAULT_SIM_SIDE_Y,DEFAULT_EVENT_TO_PROCESS);
 
     std::string dataPath = DATA_PATH;
     if (argc > 1)
@@ -40,7 +53,13 @@ int main(int argc, char const *argv[])
         fs::create_directories(dataPath);
         std::ofstream particleFile;
         particleFile.open(particlePath);
-        particles = generateParticles(10, simData, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1);
+        particles = generateParticles(
+            DEFAULT_QTY, simData, 
+            DEFAULT_MIN_MASS, DEFAULT_MAX_MASS, 
+            DEFAULT_MIN_RADIUS, DEFAULT_MAX_RADIUS, 
+            DEFAULT_MIN_VEL, DEFAULT_MAX_VEL, 
+            DEFAULT_SEED
+        );
         particleFile << simData.simSideX << " " << simData.simSideY << std::endl;
         printState(particles, particleFile, 0);
         particleFile.close();
