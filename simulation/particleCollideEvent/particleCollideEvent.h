@@ -5,45 +5,56 @@
 #include <vector>
 #include "../particle/particle.h"
 
-enum Wall{
-    WALL_X_POSITIVO,
-    WALL_Y_POSITIVO,
-    WALL_X_NEGATIVO,
-    WALL_Y_NEGATIVO
+namespace ParticleCollideEventConstants{
+    enum EventWall{
+        NO_WALL,WALL_X, WALL_Y
+    };
 };
 
 class ParticleCollideEvent
 {
 private:
-    Particle p1;
-    Particle p2;
+    Particle *p1 = NULL;
+    Particle *p2 = NULL;
+    int cc1 = 0;
+    int cc2 = 0;
     double t;
-    Wall w;
-    bool isWall = false;
+    ParticleCollideEventConstants::EventWall wall = ParticleCollideEventConstants::NO_WALL;
     bool noEvent = false;
 public:
     // Constructors
-    ParticleCollideEvent();
-    ParticleCollideEvent(Particle p, Wall w, double time);
-    ParticleCollideEvent(Particle p1,Particle p2, double time);
+    ParticleCollideEvent():noEvent(true){};
+    ParticleCollideEvent(double time,Particle* p, ParticleCollideEventConstants::EventWall wall)
+    :t(time),p1(p),cc1(p->getCollisionCount()),wall(wall){};
+    ParticleCollideEvent(double time,Particle* p1,Particle* p2)
+    :t(time),p1(p1),p2(p2),cc1(p1->getCollisionCount()),cc2(p2->getCollisionCount()){};
 
     // Getters
-    Particle getP1() const;
-    Particle getP2() const;
-    Wall getWall() const;
-    bool getIsWall() const;
-    double getTime() const;
-    bool getNoEvent() const;
+    Particle* getP1() const {return this->p1;};
+    Particle* getP2() const {return this->p2;};
+    int getCollisionCountP1() const {return this->cc1;};
+    int getCollisionCountP2() const {return this->cc2;};
+    bool getIsWall() const {return this->wall != ParticleCollideEventConstants::NO_WALL;};
+    ParticleCollideEventConstants::EventWall getWall() const {return this->wall;};
+    double getTime() const {return this->t;};
+    bool getNoEvent() const {return this->noEvent;};
 
     // Setters
-    void setP1(Particle p1);
-    void setP2(Particle p2);
-    void setWall(Wall wall);
-    void setIsWall(bool isWall);
-    void setTime(double t);
-    void setNoEvent(bool noEvent);
+    void setP1(Particle* p1){this->p1 = p1;};
+    void setP2(Particle* p2){this->p2 = p2;};
+    void setCollisionCountP1(int cc1){this->cc1 = cc1;};
+    void setCollisionCountP2(int cc2){this->cc2 = cc2;};
+    void setWall(ParticleCollideEventConstants::EventWall wall){this->wall = wall;};
+    void setTime(double time){this->t = time;};
+    void setNoEvent(bool noEvent){this->noEvent = noEvent;};
+    
+    struct TimeComparator
+    {
+        bool operator()(const ParticleCollideEvent &p1,const ParticleCollideEvent &p2){
+            return p1.t > p2.t;
+        }
+    };
 
-    std::vector<double> newVelsAfterEvent() const;
 };
 
 std::ostream &operator<<(std::ostream &os, ParticleCollideEvent const &pce);

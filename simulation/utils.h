@@ -4,17 +4,23 @@
 #include <cstdlib>
 #include <ctime>
 #include <numeric>
+#include <queue>
 #include "particle/particle.h"
 #include "particleCollideEvent/particleCollideEvent.h"
+#include "simData.h"
 
 double randomDouble(double min = 0, double max = 1)
 {
     return ((double)rand() / RAND_MAX) * (max - min) + min;
 }
 
-std::vector<Particle> generateParticles(int qty, double sideX, double sideY, double minRadius = 0, double maxRadius = 0, double minVel = 0, double maxVel = 0, long seed = -1)
+int randomPositiveNegative(){
+    return rand()>(RAND_MAX/2) ? -1 : 1; 
+}
+
+std::vector<Particle *> generateParticles(int qty,const SimData &simData, double minMass = 0, double maxMass = 0, double minRadius = 0, double maxRadius = 0, double minVel = 0, double maxVel = 0, long seed = -1)
 {
-    auto vp = std::vector<Particle>();
+    auto vp = std::vector<Particle *>();
 
     unsigned int realSeed = 0;
     if (seed < 0)
@@ -33,20 +39,22 @@ std::vector<Particle> generateParticles(int qty, double sideX, double sideY, dou
         for (int retries = 0; retries < 10 && !added; retries++)
         {
             Particle p = Particle(i,
+                                  randomDouble(minMass, maxMass),
                                   randomDouble(minRadius, maxRadius),
-                                  randomDouble(0, sideX), randomDouble(0, sideY),
-                                  randomDouble(minVel, maxVel), randomDouble(minVel, maxVel));
+                                  randomDouble(0, simData.simSideX), randomDouble(0, simData.simSideY),
+                                  randomPositiveNegative() * randomDouble(minVel, maxVel), 
+                                  randomPositiveNegative() * randomDouble(minVel, maxVel));
             bool superimposed = false;
             for (int j = 0; j < vp.size() && !superimposed; j++)
             {
-                if (pow(p.distanceTo(vp[j]), 2) <= pow(vp[j].getRadius() + p.getRadius(), 2))
+                if (pow(p.distanceTo(*(vp[j])), 2) <= pow(vp[j]->getRadius() + p.getRadius(), 2))
                 {
                     superimposed = true;
                 }
             }
             if (!superimposed)
             {
-                vp.push_back(p);
+                vp.push_back(new Particle(p));
                 added = true;
             }
         }
@@ -54,176 +62,210 @@ std::vector<Particle> generateParticles(int qty, double sideX, double sideY, dou
     return vp;
 }
 
-void initEventVector(double simSideX, double simSideY, std::vector<Particle> &particles, std::vector<ParticleCollideEvent> &events)
+void initEventVector(
+    const SimData &simData,
+    std::vector<Particle *> &particles,
+    std::priority_queue<
+        ParticleCollideEvent,
+        std::vector<ParticleCollideEvent>,
+        ParticleCollideEvent::TimeComparator> &events)
 {
     for (int i = 0; i < particles.size(); i++)
     {
-        for (int j = 0; j < particles.size(); j++)
+        for (int j = i; j < particles.size(); j++)
         {
-            if (i != j)
+            if (i == j)
             {
-                double dr[2] = {
-                    particles[j].getX() - particles[i].getX(),
-                    particles[j].getY() - particles[i].getY()};
-                double dv[2] = {
-                    particles[j].getDX() - particles[i].getDX(),
-                    particles[j].getDY() - particles[i].getDY()};
-
-                double dvdotdr = std::inner_product(dv, dv + 2, dr, 0);
-                double dvdotdv = std::inner_product(dv, dv + 2, dv, 0);
-                double drdotdr = std::inner_product(dr, dr + 2, dr, 0);
-                double sigma = particles[i].getRadius() + particles[j].getRadius();
-                double d = pow(dvdotdr, 2) - (dvdotdv * (drdotdr - pow(sigma, 2)));
-
-                if (dvdotdr < 0 && d >= 0)
+                double tx = particles[i]->collideX(0, simData.simSideX);
+                if (tx >= 0)
                 {
-                    events.push_back(ParticleCollideEvent(
-                        particles[i],
-                        particles[j],
-                        -(dvdotdr + sqrt(d)) / dvdotdv));
+                    events.push(ParticleCollideEvent(tx, particles[i],ParticleCollideEventConstants::WALL_X));
+                }
+                double ty = particles[i]->collideY(0, simData.simSideY);
+                if (ty >= 0)
+                {
+                    events.push(ParticleCollideEvent(ty, particles[i],ParticleCollideEventConstants::WALL_Y));
                 }
             }
             else
             {
-                if (particles[i].getDX() > 0)
-                {
-                    events.push_back(ParticleCollideEvent(
-                        particles[i],
-                        WALL_X_POSITIVO,
-                        (simSideX - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX()));
-                }
-                else if (particles[i].getDX() < 0)
-                {
-                    events.push_back(ParticleCollideEvent(
-                        particles[i],
-                        WALL_X_NEGATIVO,
-                        (0 - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX()));
-                }
-
-                if (particles[i].getDY() > 0)
-                {
-                    events.push_back(ParticleCollideEvent(
-                        particles[i],
-                        WALL_Y_POSITIVO,
-                        (simSideY - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX()));
-                }
-                else if (particles[i].getDY() < 0)
-                {
-                    events.push_back(ParticleCollideEvent(
-                        particles[i],
-                        WALL_Y_NEGATIVO,
-                        (0 - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX()));
+                double t = particles[i]->collide(*(particles[j]));
+                if(t >= 0){
+                    events.push(ParticleCollideEvent(t,particles[i],particles[j]));
                 }
             }
         }
     }
 }
 
-ParticleCollideEvent calculateNextCollision(double simSideX, double simSideY, std::vector<Particle> &particles)
-{
-    ParticleCollideEvent res;
+void advanceWithNoCollision(
+    std::vector<Particle *> &particles,const double deltt){
     for (int i = 0; i < particles.size(); i++)
     {
-        for (int j = 1; j < particles.size(); j++)
-        {
-            if (i != j)
-            {
-                double dr[2] = {
-                    particles[j].getX() - particles[i].getX(),
-                    particles[j].getY() - particles[i].getY()};
-                double dv[2] = {
-                    particles[j].getDX() - particles[i].getDX(),
-                    particles[j].getDY() - particles[i].getDY()};
+        // time = currEvent.getTime() - lastEventTime
+        particles[i]->advanceWithNoCollision(deltt);
+    }
+}
 
-                double dvdotdr = std::inner_product(dv, dv + 2, dr, 0);
-                double dvdotdv = std::inner_product(dv, dv + 2, dv, 0);
-                double drdotdr = std::inner_product(dr, dr + 2, dr, 0);
-                double sigma = particles[i].getRadius() + particles[j].getRadius();
-                double d = pow(dvdotdr, 2) - (dvdotdv * (drdotdr - pow(sigma, 2)));
-                double timeToEvent = -(dvdotdr + sqrt(d)) / dvdotdv;
 
-                if (dvdotdr < 0 && d >= 0 && res.getTime() < timeToEvent)
-                {
-                    res = ParticleCollideEvent(
-                        particles[i],
-                        particles[j],
-                        timeToEvent);
+ParticleCollideEvent advanceEvents(
+    const SimData &simData,
+    std::vector<Particle *> &particles,
+    std::priority_queue<
+        ParticleCollideEvent,
+        std::vector<ParticleCollideEvent>,
+        ParticleCollideEvent::TimeComparator> &events,
+        const double lastEventTime = 0){
+    ParticleCollideEvent res;
+    bool finished = false;
+    while (!finished)
+    {
+        if(events.empty()){
+            res = ParticleCollideEvent();
+            finished = true;
+            continue;
+        }
+        res = ParticleCollideEvent(events.top());
+        events.pop();
+        if(!res.getNoEvent()){
+            if(res.getCollisionCountP1()==res.getP1()->getCollisionCount()){
+                if(res.getIsWall()){
+                    advanceWithNoCollision(particles,res.getTime() - lastEventTime);
+                    if(res.getWall()==ParticleCollideEventConstants::WALL_X){
+                        res.getP1()->bounceX();
+                    }else{
+                        res.getP1()->bounceY();
+                    }
+                    // add all new events for particle p1
+                    for (int i = 0; i < particles.size(); i++)
+                    {
+                        if (particles[i]->getID() == res.getP1()->getID())
+                        {
+                            double tx = res.getP1()->collideX(0, simData.simSideX);
+                            if (tx >= 0)
+                            {
+                                events.push(ParticleCollideEvent(tx+res.getTime(), res.getP1(),ParticleCollideEventConstants::WALL_X));
+                            }
+                            double ty = res.getP1()->collideY(0, simData.simSideY);
+                            if (ty >= 0)
+                            {
+                                events.push(ParticleCollideEvent(ty+res.getTime(), res.getP1(),ParticleCollideEventConstants::WALL_Y));
+                            }
+                        }
+                        else
+                        {
+                            double t = res.getP1()->collide(*(particles[i]));
+                            if(t >= 0){
+                                events.push(ParticleCollideEvent(t+res.getTime(),res.getP1(),particles[i]));
+                            }
+                        }
+                    }
+                    finished = true;
+                } else{
+                    if(res.getCollisionCountP2() == res.getP2()->getCollisionCount()){
+                        advanceWithNoCollision(particles,res.getTime() - lastEventTime);
+                        res.getP1()->bounce(*res.getP2());
+                        // Add all new events for particles 1 and 2
+                        for (int i = 0; i < particles.size(); i++)
+                        {
+                            if (particles[i]->getID() == res.getP1()->getID())
+                            {
+                                double tx = res.getP1()->collideX(0, simData.simSideX);
+                                if (tx >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(tx+res.getTime(), res.getP1(),ParticleCollideEventConstants::WALL_X));
+                                }
+                                double ty = res.getP1()->collideY(0, simData.simSideY);
+                                if (ty >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(ty+res.getTime(), res.getP1(),ParticleCollideEventConstants::WALL_Y));
+                                }
+                            }else if (particles[i]->getID() == res.getP2()->getID()){
+                                double tx = res.getP2()->collideX(0, simData.simSideX);
+                                if (tx >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(tx+res.getTime(), res.getP2(),ParticleCollideEventConstants::WALL_X));
+                                }
+                                double ty = res.getP2()->collideY(0, simData.simSideY);
+                                if (ty >= 0)
+                                {
+                                    events.push(ParticleCollideEvent(ty+res.getTime(), res.getP2(),ParticleCollideEventConstants::WALL_Y));
+                                }
+                            }
+                            else
+                            {
+                                double t = res.getP1()->collide(*(particles[i]));
+                                if(t >= 0){
+                                    events.push(ParticleCollideEvent(t+res.getTime(),res.getP1(),particles[i]));
+                                }
+                                double t2 = res.getP2()->collide(*(particles[i]));
+                                if(t2 >= 0){
+                                    events.push(ParticleCollideEvent(t2+res.getTime(),res.getP2(),particles[i]));
+                                }
+                            }
+                        }
+                        finished = true;
+                    }
                 }
             }
-            else
-            {
-                if (particles[i].getDX() > 0)
-                {
-                    double timeToEvent = (simSideX - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX();
-                    if (timeToEvent)
-                    {
-                        ParticleCollideEvent(particles[i], WALL_X_POSITIVO, timeToEvent);
-                    }
-                }
-                else if (particles[i].getDX() < 0)
-                {
-                    double timeToEvent = (0 - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX();
-                    if (timeToEvent < res.getTime())
-                    {
-                        ParticleCollideEvent(particles[i], WALL_X_NEGATIVO, timeToEvent);
-                    }
-                }
-
-                if (particles[i].getDY() > 0)
-                {
-                    double timeToEvent = (simSideY - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX();
-                    if (timeToEvent < res.getTime())
-                    {
-                        ParticleCollideEvent(particles[i], WALL_Y_POSITIVO, timeToEvent);
-                    }
-                }
-                else if (particles[i].getDY() < 0)
-                {
-                    double timeToEvent = (0 - particles[i].getRadius() - particles[i].getX()) / particles[i].getDX();
-                    if (timeToEvent < res.getTime())
-                    {
-                        ParticleCollideEvent(particles[i], WALL_Y_NEGATIVO, timeToEvent);
-                    }
-                }
-            }
+        }else{
+            finished = true;
         }
     }
+
+    // else if p is no event return that
     return res;
 }
 
-void advanceParticle(Particle &particle, double time)
+void printState(std::vector<Particle *> &particles, std::ostream &os = std::cout, double time = 0)
 {
-    particle.setX(particle.getX() + time * particle.getDX());
-    particle.setY(particle.getY() + time * particle.getDY());
+    os << particles.size() << " " << time << std::endl;
+    for (Particle* p : particles)
+    {
+        os  << p->getX() << " " 
+            << p->getY() << " " 
+            << p->getDX() << " " 
+            << p->getDY() << " "
+            << p->getMass() << " "
+            << p->getRadius() << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "<< std::endl;
+    }
 }
 
-void advanceParticlesToNextEvent(std::vector<Particle> &particles, ParticleCollideEvent const &event)
+void printState(std::vector<Particle> &particles, std::ostream &os = std::cout, double time = 0)
 {
-    std::vector<double> vels = event.newVelsAfterEvent();
-    for (int i = 0; i < particles.size(); i++)
-    {
-        advanceParticle(particles[i],event.getTime());
-    }
-    for (int i = 0; i < particles.size(); i++)
-    {
-        if(!event.getNoEvent()){
-            if(event.getP1()==particles[i]){
-                particles[i].setDX(vels[0]);
-                particles[i].setDY(vels[1]);
-            }else if(event.getIsWall() && event.getP2() == particles[i]){
-                particles[i].setDX(vels[2]);
-                particles[i].setDY(vels[3]);
-            }
-        }
-    }
-    
-}
-void printState(std::vector<Particle> &particles, std::ostream &os = std::cout)
-{
+    os << particles.size() << " " << time << std::endl;
     for (Particle p : particles)
     {
-        os << p.getX() << " " << p.getY() << " " << p.getDX() << " " << p.getDY() << std::endl;
+        os  << p.getX() << " " 
+            << p.getY() << " " 
+            << p.getDX() << " " 
+            << p.getDY() << " "
+            << p.getMass() << " "
+            << p.getRadius() << " "
+            << 0 << " "
+            << 0 << " "
+            << 0 << " "<< std::endl;
     }
+}
+
+std::vector<Particle *> getParticles(std::istream &f)
+{
+    int particles = 0;
+    double time = 0;
+    f >> particles >> time;
+    std::vector<Particle *> vec;
+    int id = 0;
+    double x, y, dx, dy, mass, radius;
+    int r,g,b;
+    while (f >> x >> y >> dx >> dy >> mass >> radius >> r >> g >> b)
+    {
+        vec.push_back(new Particle(id, mass, radius, x, y, dx, dy));
+        id++;
+    }
+    return vec;
 }
 
 #endif
